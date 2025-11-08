@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepGuardian - AI Audio Detector</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        // 👇👇👇 YAHAA PAR APNI KEY PASTE KARO 👇👇👇
+        const CLERK_PUBLISHABLE_KEY = "pk_test_ZGVjaWRpbmctZm94aG91bmQtNzguY2xlcmsuYWNjb3VudHMuZGV2JA"; 
+        
+        const script = document.createElement('script');
+        script.setAttribute('data-clerk-publishable-key', CLERK_PUBLISHABLE_KEY);
+        script.async = true;
+        script.src = `https://cdn.clerk.com/clerk.browser.js`;
+        script.addEventListener('load', async function () {
+            await window.Clerk.load();
+            mountClerkComponents();
+        });
+        document.head.appendChild(script);
+    </script>
+    
+    <style>
+        /* --- Basic Setup --- */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            min-height: 95vh;
+            overflow: hidden; /* particles.js ke liye */
+        }
+
+        /* --- NAYA PARTICLES.JS BACKGROUND --- */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            background: rgba(30, 30, 30, 0.85); /* Thoda transparent */
+            backdrop-filter: blur(5px);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            border: 1px solid #333;
+            z-index: 10;
+        }
+
+        /* --- NAYA LOGIN CONTAINER --- */
+        #login-container {
+            text-align: center;
+            z-index: 10;
+        }
+        #login-container h1 {
+            font-size: 2.5rem;
+            color: #fff;
+        }
+        #login-container h1 i {
+            color: #00aaff;
+        }
+        #login-container p {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 2rem;
+        }
+        #sign-in-component {
+            background: #1e1e1e;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid #333;
+        }
+        /* --- NAYA USER BUTTON (Top Right) --- */
+        #user-button-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        header { margin-bottom: 2rem; }
+        header h1 { font-size: 2.5rem; color: #fff; margin: 0; }
+        header h1 i { color: #00aaff; }
+        header p { font-size: 1.1rem; color: #aaa; }
+
+        /* --- Drag and Drop Area --- */
+        .upload-area {
+            border: 2px dashed #555; border-radius: 12px; padding: 2rem;
+            cursor: pointer; transition: background-color 0.3s, border-color 0.3s;
+        }
+        .upload-area.dragover { border-color: #00aaff; background-color: #2a2a2a; }
+        .upload-area i { font-size: 3rem; color: #666; margin-bottom: 1rem; }
+        .upload-area p { margin: 0.5rem 0; font-size: 1rem; }
+        .upload-area .upload-btn {
+            background: #007bff; color: white; border: none; border-radius: 8px;
+            padding: 0.8rem 1.5rem; font-size: 1rem; font-weight: 600;
+            cursor: pointer; margin-top: 1rem; transition: background-color 0.3s;
+        }
+        .upload-area .upload-btn:hover { background: #0056b3; }
+        #file-input { display: none; }
+
+        /* --- Result & Loading Area --- */
+        .result-area { margin-top: 2rem; display: none; }
+        .loading-spinner {
+            width: 40px; height: 40px; border: 4px solid #444;
+            border-top: 4px solid #00aaff; border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto; display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #result-text { font-size: 1.8rem; font-weight: 700; margin: 0.5rem 0; }
+        #result-score { font-size: 1.1rem; color: #aaa; }
+        .real { color: #4CAF50; }
+        .fake { color: #F44336; }
+    </style>
+</head>
+<body>
+
+    <div id="particles-js"></div>
+    
+    <div id="user-button-container"></div>
+
+    <div id="login-container">
+        <h1><i class="fa-solid fa-shield-halved"></i> Welcome to DeepGuardian</h1>
+        <p>Please sign in to continue</p>
+        <div id="sign-in-component"></div>
+    </div>
+    
+    <div id="app-container" class="container" style="display: none;">
+        <header>
+            <h1><i class="fa-solid fa-shield-halved"></i> DeepGuardian</h1>
+            <p>Is your audio file real or a deepfake?</p>
+        </header>
+        <div class="upload-area" id="upload-area">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <p>Drag & Drop your audio file here</p>
+            <p>(.mp3, .wav, etc.)</p>
+            <p>or</p>
+            <button class="upload-btn" id="upload-btn">Browse Files</button>
+            <input type="file" id="file-input" accept="audio/*">
+        </div>
+        <div class="result-area" id="result-area">
+            <div class="loading-spinner" id="loading-spinner"></div>
+            <h2 id="result-text"></h2>
+            <p id="result-score"></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    
+    <script>
+        // --- NAYA: CLERK AUTH LOGIC ---
+        function mountClerkComponents() {
+            const signInDiv = document.getElementById('sign-in-component');
+            const userButtonDiv = document.getElementById('user-button-container');
+            const loginContainer = document.getElementById('login-container');
+            const appContainer = document.getElementById('app-container');
+
+            // Clerk ke state (logged in/out) ko suno
+            window.Clerk.addListener(({ user }) => {
+                if (user) {
+                    // User logged in hai
+                    loginContainer.style.display = 'none';
+                    appContainer.style.display = 'block';
+                    window.Clerk.mountUserButton(userButtonDiv);
+                } else {
+                    // User logged out hai
+                    loginContainer.style.display = 'block';
+                    appContainer.style.display = 'none';
+                    window.Clerk.mountSignIn(signInDiv);
+                }
+            });
+        }
+        
+        // --- PARTICLES.JS LOGIC ---
+        particlesJS("particles-js", {
+            "particles": { "number": {"value": 80}, "color": {"value": "#555555"}, "shape": {"type": "circle"}, "opacity": {"value": 0.5}, "size": {"value": 3}, "line_linked": {"enable": true, "distance": 150, "color": "#555555", "opacity": 0.4}, "move": {"enable": true, "speed": 2}},
+            "interactivity": {"events": {"onhover": {"enable": true, "mode": "repulse"}}},
+        });
+
+        // --- PURANA APP/SCAN LOGIC ---
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const resultArea = document.getElementById('result-area');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const resultText = document.getElementById('result-text');
+        const resultScore = document.getElementById('result-score');
+
+        uploadBtn.addEventListener('click', () => { fileInput.click(); });
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) { handleFile(file); }
+        });
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) { handleFile(file); }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('audio/')) {
+                alert('Please upload an audio file only.');
+                return;
+            }
+            scanFile(file);
+        }
+
+        async function scanFile(file) {
+            resultArea.style.display = 'block';
+            loadingSpinner.style.display = 'block';
+            resultText.textContent = '';
+            resultScore.textContent = 'Analyzing... please wait.';
+            resultText.className = '';
+            const formData = new FormData();
+            formData.append('audio', file);
+            try {
+                // NAYA: Backend se token bhi bhejenge
+                const token = await window.Clerk.session.getToken();
+                
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }, // Token yahaan add kiya
+                    body: formData 
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Server error');
+                }
+                const result = await response.json();
+                loadingSpinner.style.display = 'none';
+                const realScore = result.real_score || 0;
+                const fakeScore = result.fake_score || 0;
+                if (realScore > fakeScore) {
+                    resultText.textContent = 'Result: REAL';
+                    resultText.className = 'real';
+                    resultScore.textContent = `Our analysis shows a ${Math.round(realScore * 100)}% probability this audio is authentic.`;
+                } else {
+                    resultText.textContent = 'Result: FAKE';
+                    resultText.className = 'fake';
+                    resultScore.textContent = `Our analysis shows a ${Math.round(fakeScore * 100)}% probability this audio is AI-generated.`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                loadingSpinner.style.display = 'none';
+                resultText.textContent = 'Error';
+                resultText.className = 'fake';
+                resultScore.textContent = error.message;
+            }
+        }
+    </script>
+</body>
+</html>
