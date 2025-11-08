@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
-        // 👇👇👇 YAHAA PAR APNI KEY PASTE KARO 👇👇👇
+        
         const CLERK_PUBLISHABLE_KEY = "pk_test_cmVhbC1zZWFob3JzZS02MS5jbGVyay5hY2NvdW50cy5kZXYk"; 
         
         const script = document.createElement('script');
@@ -34,7 +34,7 @@
             overflow: hidden; /* particles.js ke liye */
         }
 
-        /* --- NAYA PARTICLES.JS BACKGROUND --- */
+        /* --- PARTICLES.JS BACKGROUND --- */
         #particles-js {
             position: fixed;
             width: 100%;
@@ -57,7 +57,7 @@
             z-index: 10;
         }
 
-        /* --- NAYA LOGIN CONTAINER --- */
+        /* ---  LOGIN CONTAINER --- */
         #login-container {
             text-align: center;
             z-index: 10;
@@ -159,14 +159,14 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     
     <script>
-        // --- NAYA: CLERK AUTH LOGIC ---
+        // ---  CLERK AUTH LOGIC ---
         function mountClerkComponents() {
             const signInDiv = document.getElementById('sign-in-component');
             const userButtonDiv = document.getElementById('user-button-container');
             const loginContainer = document.getElementById('login-container');
             const appContainer = document.getElementById('app-container');
 
-            // Clerk ke state (logged in/out) ko suno
+            // Clerk ke state (logged in/out) 
             window.Clerk.addListener(({ user }) => {
                 if (user) {
                     // User logged in hai
@@ -228,7 +228,7 @@
             const formData = new FormData();
             formData.append('audio', file);
             try {
-                // NAYA: Backend se token bhi bhejenge
+                //  Backend se token bhi bhejenge
                 const token = await window.Clerk.session.getToken();
                 
                 const response = await fetch('/api/scan', {
@@ -266,5 +266,6 @@
 </body>
 
 </html>
+
 
 
