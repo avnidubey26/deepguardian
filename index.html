@@ -13,7 +13,7 @@
         const script = document.createElement('script');
         script.setAttribute('data-clerk-publishable-key', CLERK_PUBLISHABLE_KEY);
         script.async = true;
-        script.src = `https://cdn.clerk.com/clerk.browser.js`;
+        script.src = `https://cdn.clerk.dev/clerk.browser.js`;
         script.addEventListener('load', async function () {
             await window.Clerk.load();
             mountClerkComponents();
@@ -266,3 +266,4 @@
 </body>
 
 </html>
+
